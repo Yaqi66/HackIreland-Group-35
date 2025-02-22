@@ -1,0 +1,286 @@
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  box-sizing: border-box;
+  transition: all 0.5s ease;
+}
+
+.app-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, #bf00d0 0%, #0593bf 100%);
+  transition: opacity 0.5s ease;
+  opacity: 0;
+  z-index: -1;
+}
+
+.app-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, #727272 0%, #7C7C7C 100%);
+  transition: opacity 0.5s ease;
+  opacity: 0;
+  z-index: -1;
+}
+
+.app-container.listening::before {
+  opacity: 1;
+}
+
+.app-container.not-listening::after {
+  opacity: 1;
+}
+
+.horizontal-container {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.vertical-container {
+  display: flex;
+  justify-content: center;
+}
+
+.left-container {
+  flex: 0.4;
+}
+
+.middle-container {
+  flex: 0.2;
+}
+
+.right-container {
+  flex: 0.4;
+}
+
+.top-container {
+  flex: 0.4;
+  height: 40%;
+}
+
+.center-container {
+  flex: 0.2;
+  height: 20%;
+}
+
+.bottom-container {
+  flex: 0.4;
+  height: 40%;
+}
+
+.suggestion-box {
+  background: rgba(255, 255, 255);
+  border-radius: 12px;
+  padding: 25px;
+  color: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.5s ease;
+  font-size: 1.2em;
+  width: 100%;
+  opacity: 0;
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.suggestion-box.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.suggestion-box.top-left {
+  transform-origin: bottom right;
+}
+
+.suggestion-box.top-right {
+  transform-origin: bottom left;
+}
+
+.suggestion-box.bottom-left {
+  transform-origin: top right;
+}
+
+.suggestion-box.bottom-right {
+  transform-origin: top left;
+}
+
+.suggestion-box:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: scale(1.05);
+}
+
+.suggestion-box:not(.show):hover {
+  transform: scale(0);
+}
+
+.center {
+  position: relative;
+  justify-content: center;
+}
+
+.avatar-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  display: flex;
+  top: -50%;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.5s ease;
+}
+
+.avatar-background-listening {
+  animation: fullRotation 3s linear infinite;
+  transform-origin: center center;
+}
+
+.listening .avatar-container {
+  animation: float 3s ease-in-out infinite;
+}
+
+.not-listening .avatar-container {
+  animation: none;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes fullRotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.sleeping-z {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  overflow: visible;
+}
+
+.sleeping-z .z {
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.sleeping-z .z-small {
+  animation: floatZ 2s linear infinite;
+  animation-delay: 0s;
+}
+
+.sleeping-z .z-medium {
+  animation: floatZ 2s linear infinite;
+  animation-delay: 0.25s;
+}
+
+.sleeping-z .z-large {
+  animation: floatZ 2s linear infinite;
+  animation-delay: 0.5s;
+}
+
+@keyframes floatZ {
+  0% {
+    transform: translate(0, 0) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(10px, -10px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(20px, -20px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0.4;
+    transform: translate(20%, -20%) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(20%, -20%) scale(1);
+  }
+  100% {
+    opacity: 0.4;
+    transform: translate(20%, -20%) scale(0.8);
+  }
+}
+
+.video-preview {
+  background: rgba(0, 0, 0);
+  border-radius: 12px;
+  height: 200px;
+  width: 300px;
+  object-fit: cover;
+}
+
+.audio-wave {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 30px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.audio-wave.active {
+  opacity: 0.6;
+}
