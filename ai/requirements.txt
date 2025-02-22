@@ -1,0 +1,10 @@
+openai
+python-dotenv
+pyttsx3
+sounddevice
+scipy
+numpy
+requests
+Pillow
+pygame
+beautifulsoup4
