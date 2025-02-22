@@ -7,7 +7,7 @@ import useStore from "./store/useStore";
 import useWebRTC from "./hooks/useWebRTC";
 import { useSupabase } from './hooks/useSupabase'
 import AuthModal from './components/AuthModal'
-import PatientImages from './components/PatientImages'
+import PatientList from './components/PatientList'
 
 function App() {
   const { awakeState, isListening } = useStore();
@@ -41,7 +41,7 @@ function App() {
 
       {!user ? undefined : (
         <div className="main-content">
-          <PatientImages />
+          <PatientList user={user}/>
         </div>
       )}
 
