@@ -32,26 +32,21 @@ export default function Patient({ back, patient, user }) {
     try {
       setUploading(true);
       setUploadError(null);
-      
       const file = e.target.files[0];
-      if (!file) return;
-
+        if (!file)
+            return;
       // Validate file type
       if (!file.type.startsWith('image/'))
         throw new Error('Please upload an image file');
-
       // Generate a unique filename with timestamp
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-
       const { error: uploadError } = await supabase.storage
         .from('patient-images')
         .upload(fileName, file);
-
       if (uploadError) {
         throw uploadError;
       }
-
       // Refresh the image list
       await loadImages();
     } catch (error) {
@@ -88,7 +83,7 @@ export default function Patient({ back, patient, user }) {
       <div className="patient-info-section">
         <h2>Patient Information</h2>
         <div className="patient-form">
-          <div className="form-group">
+            <div className="form-group">
             <label htmlFor="name">Name:</label>
             <input
               type="text"
@@ -153,8 +148,7 @@ export default function Patient({ back, patient, user }) {
           {uploadError && <div className="upload-error">{uploadError}</div>}
         </div>
       </div>
-
-        <button onClick={back}>Press Me To Back Out</button> <button onClick={upsertPatientData}>Press Me To Upsert</button>
+      <button onClick={back}>Press Me To Back Out</button> <button onClick={upsertPatientData}>Press Me To Upsert</button>
 
       <div className="image-list">
         {images

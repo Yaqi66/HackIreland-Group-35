@@ -8,6 +8,7 @@ import useWebRTC from "./hooks/useWebRTC";
 import { useSupabase } from './hooks/useSupabase'
 import AuthModal from './components/AuthModal'
 import PatientList from './components/PatientList'
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 
 function App() {
   const { awakeState, isListening } = useStore();
@@ -27,30 +28,77 @@ function App() {
 
   useEffect(()=>{
     console.log("showAuthModal:", showAuthModal);
-  },[showAuthModal]) 
+  }, [showAuthModal]) 
 
-  return (
-    <div
-      className={`app-container ${awakeState ? "listening" : "not-listening"}`}
-    >
-      {user && (
-        <button onClick={signOut} className="sign-out-button">
-          Sign Out
-        </button>
-      )}
-
-      {!user ? undefined : (
-        <div className="main-content">
-          <PatientList user={user}/>
+    const MainContent = () =>(
+          <>
+        {user && (
+            <button className="sign-out-button" onClick={signOut}>
+                Sign Out
+            </button>
+        )}
+        <div className="left-container horizontal-container">
+            <div className="top-container left-top corner vertical-container">
+                <div
+                    className={`suggestion-box top-left ${awakeState ? "show" : ""}`}
+                >
+                    {isListening ? "Listening..." : "Tap to Start"}
+                </div>
+            </div>
+            <div className="center-container left-center vertical-container"></div>
+            <div className="bottom-container left-bottom corner vertical-container">
+                <div
+                    className={`suggestion-box bottom-left ${awakeState ? "show" : ""}`}
+                >
+                    Suggestion 3
+                </div>
+            </div>
         </div>
-      )}
+        <div className="middle-container horizontal-container">
+            <div className="top-container middle-top vertical-container"></div>
+            <div className="center-container middle-center vertical-container center">
+                <Avatar />
+                {/* <div className={`audio-wave ${awakeState ? 'active' : ''}`}>
+                    <AudioWave isListening={awakeState} />
+                    </div> */}
+                </div>
+                <div className="bottom-container middle-bottom vertical-container"></div>
+                </div>
+                <div className="right-container horizontal-container">
+                    <div className="top-container right-top corner vertical-container">
+                        <div
+                            className={`suggestion-box top-right ${awakeState ? "show" : ""}`}
+                        >
+                            Suggestion 2
+                        </div>
+                    </div>
+                    <div className="center-container right-center vertical-container"></div>
+                    <div className="bottom-container right-bottom corner vertical-container">
+                        <div
+                            className={`suggestion-box bottom-right ${
+              awakeState ? "show" : ""
+            }`}
+                        >
+                            {/* <VideoPreview stream={videoStream} /> */}
+                            {error && <div className="error-message">{error}</div>}
+                        </div>
+                </div>
+        </div>
+        <AuthModal 
+            isOpen={showAuthModal} 
+            onClose={() => user && setShowAuthModal(false)} 
+        />
+        </>
+    );
 
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => user && setShowAuthModal(false)} 
-      />
-    </div>
-  );
+    return (<div className={`app-container ${awakeState ? "listening" : "not-listening"}`}>
+                <Router>
+                    <Routes>
+                        <Route path="/" element={<MainContent/>}/>
+                        <Route path="/admin" element={<PatientList user={user}/>}/>
+                    </Routes>
+                </Router>
+            </div>)
 }
 
 export default App;
