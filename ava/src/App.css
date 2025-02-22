@@ -314,6 +314,7 @@
   padding: 2rem;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
+  overflow-y: scroll;
 }
 
 /* Auth Modal Styles */
@@ -353,7 +354,6 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #666;
 }
 
 .form-group input {
@@ -431,10 +431,7 @@
 }
 
 .patient-images {
-  padding: 1rem;
   color: white;
-  height: 100%;
-  overflow-y: auto;
 }
 
 .patient-images h3 {
