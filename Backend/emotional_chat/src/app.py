@@ -231,7 +231,7 @@ def process_video():
             try:
                 logging.info("Cleaning up temporary files...")
                 if video_path.exists():
-                    video_path.unlink()
+                    # video_path.unlink()
                     logging.info(f"Deleted {video_path}")
                 temp_dir.rmdir()
                 logging.info(f"Removed directory {temp_dir}")

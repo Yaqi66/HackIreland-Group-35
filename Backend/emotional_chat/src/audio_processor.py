@@ -117,8 +117,8 @@ class AudioProcessor:
         """
         try:
             # Create temporary files
-            webm_path = self.temp_dir / "temp_audio.webm"
-            wav_path = self.temp_dir / "temp_audio.wav"
+            webm_path = self.temp_dir / f"{uuid.uuid4()}.webm"
+            wav_path = self.temp_dir / f"{uuid.uuid4()}.wav"
 
             # Write WebM data to temporary file
             with open(webm_path, 'wb') as f:
