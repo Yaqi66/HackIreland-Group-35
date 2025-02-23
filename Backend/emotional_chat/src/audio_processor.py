@@ -2,6 +2,7 @@
 Audio processing module for handling different audio formats and wake word detection
 """
 import os
+import io
 import base64
 import tempfile
 import logging
@@ -30,43 +31,79 @@ class AudioProcessor:
         # Create temp directory if it doesn't exist
         self.temp_dir.mkdir(parents=True, exist_ok=True)
 
-    def process_audio_file(self, audio_file):
+    def process_audio_data_base64(self, base64_audio):
         """
-        Convert audio file to text using speech recognition
+        Process base64 encoded audio data for wake word detection
 
         Args:
-            audio_file (str): Path to the audio file (WAV format)
+            base64_audio (str): Base64 encoded audio data
 
         Returns:
-            str: Transcribed text or empty string if failed
+            dict: Result containing wake word detection status and transcription
         """
         try:
-            # Verify input file exists
-            if not os.path.exists(audio_file):
-                raise FileNotFoundError(f"Audio file not found: {audio_file}")
-
-            logging.info(f"Processing audio file: {audio_file}")
-
-            with sr.AudioFile(audio_file) as source:
-                # Record audio from file
-                audio = self.recognizer.record(source)
-
-                try:
-                    # Convert speech to text
-                    text = self.recognizer.recognize_google(audio, language='en-US')
-                    logging.info(f"Transcribed text: {text}")
-                    return text
-
-                except sr.UnknownValueError:
-                    logging.warning("Speech recognition could not understand audio")
-                    return ""
-                except sr.RequestError as e:
-                    logging.error(f"Could not request results from speech recognition service: {e}")
-                    return ""
-
+            # Decode base64 data
+            audio_bytes = base64.b64decode(base64_audio)
+            
+            # Create a BytesIO object
+            audio_stream = io.BytesIO(audio_bytes)
+            
+            # Create temporary WAV file
+            temp_wav = self.temp_dir / "temp_audio.wav"
+            
+            # Convert WebM to WAV using ffmpeg
+            cmd = [
+                self.ffmpeg_path,
+                '-i', 'pipe:0',  # Read from stdin
+                '-f', 'wav',     # Output format
+                '-ar', '16000',  # Sample rate
+                '-ac', '1',      # Mono audio
+                str(temp_wav)    # Output file
+            ]
+            
+            try:
+                # Run ffmpeg
+                process = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+                
+                # Write audio data to ffmpeg's stdin
+                stdout, stderr = process.communicate(input=audio_bytes)
+                
+                if process.returncode != 0:
+                    logging.error(f"FFmpeg error: {stderr.decode()}")
+                    return {
+                        'success': False,
+                        'error': 'Failed to convert audio format'
+                    }
+                
+                # Process the WAV file
+                return self.process_audio_file(str(temp_wav))
+                
+            except Exception as e:
+                logging.error(f"Error converting audio: {str(e)}")
+                return {
+                    'success': False,
+                    'error': f'Error converting audio: {str(e)}'
+                }
+            
         except Exception as e:
-            logging.error(f"Error processing audio file: {e}")
-            return ""
+            logging.error(f"Error processing base64 audio: {str(e)}")
+            return {
+                'success': False,
+                'error': f'Error processing base64 audio: {str(e)}'
+            }
+            
+        finally:
+            # Cleanup temporary files
+            try:
+                if temp_wav.exists():
+                    temp_wav.unlink()
+            except Exception as e:
+                logging.warning(f"Error cleaning up temporary file: {str(e)}")
 
     def _convert_webm_to_wav(self, webm_data):
         """
@@ -118,7 +155,75 @@ class AudioProcessor:
             logging.exception("Error converting WebM to WAV:")
             raise Exception(f"Error converting WebM to WAV: {str(e)}")
 
-    def process_audio_data(self, audio_wav_file_path):
+    def process_audio_data_base64(self, audio_base64):
+        """
+        Process audio data for wake word detection from base64 encoded WAV.
+
+        Args:
+            audio_base64 (str): Base64 encoded WAV audio data.
+
+        Returns:
+            dict: Result containing wake word detection status and transcription.
+        """
+        try:
+            logging.info("process_audio_data_base64 called")
+
+            # Decode base64 to bytes
+            audio_bytes = base64.b64decode(audio_base64)
+
+            # Create an in-memory file-like object
+            audio_stream = io.BytesIO(audio_bytes)
+
+            # Process the audio stream
+            with sr.AudioFile(audio_stream) as source:
+                logging.info("Recording audio from stream...")
+                audio = self.recognizer.record(source)
+
+                try:
+                    logging.info("Converting speech to text...")
+                    text = self.recognizer.recognize_google(audio, language='en-US').lower()
+                    logging.info(f"Transcribed text: {text}")
+
+                    wake_word_detected = any(word in text for word in self.wake_words)
+                    detected_words = [word for word in self.wake_words if word in text]
+
+                    return {
+                        'success': True,
+                        'wake_word_detected': wake_word_detected,
+                        'detected_words': detected_words,
+                        'transcription': text
+                    }
+
+                except sr.UnknownValueError:
+                    logging.warning("Speech recognition could not understand audio")
+                    return {
+                        'success': True,
+                        'wake_word_detected': False,
+                        'error': 'Could not understand audio'
+                    }
+                except sr.RequestError as e:
+                    logging.error(f"Error with speech recognition service: {str(e)}")
+                    return {
+                        'success': False,
+                        'error': f'Error with speech recognition service: {str(e)}'
+                    }
+
+        except Exception as e:
+            logging.exception("Error processing audio:")
+            return {
+                'success': False,
+                'error': f'Error processing audio: {str(e)}'
+            }
+
+        finally:
+            try:
+                logging.info("Cleaning up temporary files...")
+                for temp_file in self.temp_dir.glob('*'):
+                    temp_file.unlink()
+            except Exception as e:
+                logging.warning(f"Error during temporary file cleanup: {e}")
+
+    def process_audio_file(self, audio_wav_file_path):
         """
         Process audio data for wake word detection
 
@@ -129,7 +234,7 @@ class AudioProcessor:
             dict: Result containing wake word detection status and transcription
         """
         try:
-            logging.info("process_audio_data called")
+            logging.info("process_audio_file called")
 
             # Process the WAV file
             with sr.AudioFile(audio_wav_file_path) as source:

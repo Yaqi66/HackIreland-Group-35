@@ -2,6 +2,7 @@
 Flask application for the Emotional Chat System
 """
 import os
+import io
 import base64
 import logging
 import tempfile
@@ -92,7 +93,7 @@ def detect_wake_word():
             }), 400
 
         # Process the WebM audio data
-        result = audio_processor.process_audio_data(data['audio'])
+        result = audio_processor.process_audio_data_base64(data['audio'])
         return jsonify(result)
 
     except Exception as e:
@@ -169,7 +170,7 @@ def process_video():
                     logging.info(f"Saved debug WAV file to: {debug_wav}")
                     
                     # Process the audio file
-                    asr_response = audio_processor.process_audio_data(str(debug_wav))
+                    asr_response = audio_processor.process_audio_file(str(debug_wav))
                     if not asr_response or not asr_response.get('success'):
                         error_msg = asr_response.get('error', 'Failed to transcribe audio') if asr_response else 'Failed to transcribe audio'
                         logging.error(error_msg)
