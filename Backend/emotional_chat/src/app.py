@@ -30,6 +30,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# Configure Flask to handle trailing slashes
+app.url_map.strict_slashes = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -97,13 +100,22 @@ def detect_wake_word():
         return jsonify({
             'error': 'Failed to process audio',
             'details': str(e)
-        }), 500
+        }), 500 
 
 @app.route('/api/process-video', methods=['POST'])
 def process_video():
     """Process video for emotion detection and speech recognition"""
     logging.info("process_video endpoint called")
+    logging.info(f"Request method: {request.method}")
+    logging.info(f"Request headers: {dict(request.headers)}")
+    logging.info(f"Request path: {request.path}")
+    logging.info(f"Request data: {request.get_data()[:100]}...")  # Log first 100 chars of data
+    
     try:
+        if not request.is_json:
+            logging.warning("Request is not JSON")
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+            
         if 'video' not in request.json:
             logging.warning("No video data provided")
             return jsonify({'error': 'No video data provided'}), 400
@@ -283,10 +295,40 @@ def process_emotion():
             'details': str(e)
         }), 500
 
-@app.route('/api/test', methods=['GET'])
-def test_connection():
+@app.route('/api/test', methods=['GET', 'POST'])
+def test_endpoint():
     """Test endpoint to verify API is working"""
-    return jsonify({'status': 'API is running'})
+    return jsonify({
+        'status': 'ok',
+        'message': 'API is working',
+        'method': request.method,
+        'path': request.path
+    })
+
+@app.route('/api/debug/routes', methods=['GET'])
+def list_routes():
+    """List all registered routes"""
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify(routes)
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors with more information"""
+    logging.warning(f"404 Error: {request.method} {request.url}")
+    logging.warning(f"Headers: {dict(request.headers)}")
+    return jsonify({
+        'error': 'Not Found',
+        'message': f'The requested URL {request.path} was not found on the server.',
+        'method': request.method,
+        'path': request.path,
+        'available_routes': [str(rule) for rule in app.url_map.iter_rules()]
+    }), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
