@@ -21,13 +21,10 @@ from .config import Config
 import subprocess
 import uuid
 from .command_recognizer import CommandRecognizer
-<<<<<<< Updated upstream
 import requests
 from urllib.parse import quote
 import re
-=======
 from openai import OpenAI
->>>>>>> Stashed changes
 
 from . import emotional_speech_agent
 
