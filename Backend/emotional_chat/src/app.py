@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 import json
 import traceback
 import time
-import openai
 from .emotional_speech_agent import EmotionalSpeechAgent
 from .audio_processor import AudioProcessor
 from .video_processor import split_video, cleanup_temp_files
@@ -22,9 +21,13 @@ from .config import Config
 import subprocess
 import uuid
 from .command_recognizer import CommandRecognizer
+<<<<<<< Updated upstream
 import requests
 from urllib.parse import quote
 import re
+=======
+from openai import OpenAI
+>>>>>>> Stashed changes
 
 from . import emotional_speech_agent
 
@@ -45,7 +48,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 speech_agent = EmotionalSpeechAgent()
 audio_processor = AudioProcessor()
 
-
 # Create temp directory for processing
 TEMP_DIR = Path(tempfile.gettempdir()) / "emotional_chat_temp"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -53,6 +55,9 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 # Create necessary directories
 for path in [Config.UPLOAD_FOLDER, Config.TEMP_FOLDER, Config.RECORDINGS_FOLDER]:
     path.mkdir(parents=True, exist_ok=True)
+
+# Initialize OpenAI client
+client = OpenAI()
 
 @app.route('/')
 def index():
@@ -199,13 +204,27 @@ def process_video():
                     command_recognizer = CommandRecognizer(Config.OPENAI_API_KEY)
                     command = command_recognizer.recognize_command(asr_response['transcription'])
 
+                    # Generate text-to-speech audio for the AI response
+                    temp_audio_path = temp_dir / f"{uuid.uuid4()}.mp3"
+                    response = client.audio.speech.create(
+                        model="tts-1",
+                        voice="alloy",
+                        input=ai_response
+                    )
+                    response.stream_to_file(temp_audio_path)
+
+                    # Convert audio file to base64
+                    with open(temp_audio_path, 'rb') as audio_file:
+                        audio_base64 = base64.b64encode(audio_file.read()).decode('utf-8')
+
                     # Return the complete result
                     result = {
                         'success': True,
                         'emotions': emotion_result['emotions'],
                         'speech_text': asr_response['transcription'],
                         'response': ai_response,
-                        'command': command
+                        'command': command,
+                        'audio': audio_base64
                     }
                     logging.info(f"Final result: {result}")
                     return jsonify(result)

@@ -16,21 +16,24 @@ const YoutubePreview = ({ url }) => {
 
   return (
     <div className="youtube-preview">
-      <iframe
-        width="100%"
-        height="100%"
-        src={`https://www.youtube.com/embed/${videoId}`}
-        title="YouTube video player"
-        frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
+      <div className="youtube-preview-container">
+        <iframe
+          width="100%"
+          height="100%"
+          src={`https://www.youtube.com/embed/${videoId}`}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+        <div className="video-interactive-cover"></div>
+      </div>
     </div>
   );
 };
 
 YoutubePreview.propTypes = {
-  url: PropTypes.string.isRequired
+  url: PropTypes.string.isRequired,
 };
 
 export default YoutubePreview;

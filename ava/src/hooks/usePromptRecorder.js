@@ -1,13 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import useStore from '../store/useStore';
+import useMediaPlayer from './useMediaPlayer';
 
 const SILENCE_THRESHOLD = 0.01;
-const SILENCE_DURATION = 1500; // 1.5 seconds
-const GRACE_PERIOD = 1000; // 1 second
+const SILENCE_DURATION = 1000; // 1 seconds
+const GRACE_PERIOD = 1000; // 0.7 second
 const MAX_RECORDING_DURATION = 10000; // 10 seconds
 
 const usePromptRecorder = () => {
-  const { setLastResponse, isListening, stopListening } = useStore();
+  const { setLastResponse, isListening, stopListening, setIsAwake, setActiveEmotion } = useStore();
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorder = useRef(null);
   const recordedChunks = useRef([]);
@@ -16,6 +17,8 @@ const usePromptRecorder = () => {
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const recordingStartTimeRef = useRef(null);
+  const { playAudioFromBase64 } = useMediaPlayer();
+  const mouthAnimationInterval = useRef(null);
 
   // Create media recorder with video
   const createMediaRecorder = async () => {
@@ -83,25 +86,48 @@ const usePromptRecorder = () => {
       const base64Data = await blobToBase64(blob);
       console.log("Sending video request with base64 data length:", base64Data.length);
 
-      const response = await fetch('http://172.16.6.104:5000/api/process-video', {
+      setActiveEmotion('thinking');
+      const response = await fetch('http://172.16.5.234:5000/api/process-video', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          video: base64Data
-        })
+        body: JSON.stringify({ video: base64Data }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+      setActiveEmotion('very-happy');
+      console.log("Response data:", data);
+
+      // Play the audio response if available
+      if (data.success && data.audio) {
+        // Start mouth animation
+        const randomMouthPosition = () => {
+          setActiveEmotion(Math.random() < 0.5 ? 'happy' : 'very-happy');
+        };
+        
+        mouthAnimationInterval.current = setInterval(randomMouthPosition, Math.random() * 100 + 50);
+        
+        try {
+          await playAudioFromBase64(data.audio);
+        } finally {
+          // Clean up mouth animation
+          if (mouthAnimationInterval.current) {
+            clearInterval(mouthAnimationInterval.current);
+            mouthAnimationInterval.current = null;
+            setActiveEmotion('happy');
+          }
+        }
       }
 
-      const data = await response.json();
-      console.log("Command processing response:", data);
       setLastResponse(data);
+      return data;
     } catch (error) {
       console.error('Error sending recording to server:', error);
+      setActiveEmotion('happy');
     }
   };
 
@@ -213,11 +239,17 @@ const usePromptRecorder = () => {
       if (maxDurationTimer.current) {
         clearTimeout(maxDurationTimer.current);
       }
+      if (mouthAnimationInterval.current) {
+        clearInterval(mouthAnimationInterval.current);
+        mouthAnimationInterval.current = null;
+      }
     };
   }, []);
 
   return {
-    isRecording
+    isRecording,
+    startRecording,
+    stopRecording
   };
 };
 
