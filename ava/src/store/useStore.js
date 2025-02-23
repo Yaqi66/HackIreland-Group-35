@@ -28,6 +28,15 @@ const useStore = create((set) => ({
   isNewsModalOpen: false,
   setIsNewsModalOpen: (state) => set({ isNewsModalOpen: state }),
 
+  // Image carousel state
+  isImageCarouselModalOpen: false,
+  setIsImageCarouselModalOpen: (state) => set({ isImageCarouselModalOpen: state }),
+  carouselImages: [],
+  addCarouselImage: (imageUrl) => set((state) => ({
+    carouselImages: [...state.carouselImages, imageUrl]
+  })),
+  clearCarouselImages: () => set({ carouselImages: [] }),
+
   // Voice state
   voiceIsPlaying: false,
   setVoiceIsPlaying: (state) => set({ voiceIsPlaying: state }),

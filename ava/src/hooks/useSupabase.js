@@ -122,14 +122,57 @@ export const useSupabase = () => {
     }
   };
 
+  const uploadImage = async (imageUrl) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (!user) throw new Error('User not authenticated');
+
+      // Fetch the image from URL
+      const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error('Failed to fetch image');
+      const imageBlob = await response.blob();
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const filename = `${timestamp}-${Math.random().toString(36).substring(7)}.jpg`;
+      const filePath = `${user.id}/${filename}`;
+
+      // Upload to Supabase Storage in patient-images bucket
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('patient-images')
+        .upload(filePath, imageBlob, {
+          contentType: 'image/jpeg',
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('patient-images')
+        .getPublicUrl(filePath);
+
+      return { publicUrl };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
+    user,
     loading,
     error,
-    user,
     signIn,
     signUp,
     signOut,
     insertData,
     getData,
+    uploadImage,
   };
 };

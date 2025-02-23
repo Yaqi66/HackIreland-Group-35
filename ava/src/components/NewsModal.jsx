@@ -35,15 +35,36 @@ const NewsModal = () => {
         <div className="news-modal-container">
           <h2 className="news-modal-title">Latest News</h2>
           <div className="news-articles-list">
-            {newsArticles.map((article, index) => (
+            {newsArticles?.map((article, index) => (
               <article key={index} className="news-modal-article">
-                <h3 className="news-modal-article-title">{article.title}</h3>
+                <div className="news-modal-article-image">
+                  {article.image ? (
+                    <img 
+                      src={article.image} 
+                      alt={article.title || 'News article'} 
+                      onError={(e) => {
+                        e.target.src = 'https://placehold.co/600x400?text=News';
+                      }}
+                    />
+                  ) : (
+                    <div className="news-modal-article-image-placeholder">
+                      News
+                    </div>
+                  )}
+                </div>
                 <div className="news-modal-article-content">
-                  {article.paragraphs.map((paragraph, pIndex) => (
-                    <p key={pIndex} className="news-modal-paragraph">
-                      {paragraph}
-                    </p>
-                  ))}
+                  <h3 className="news-modal-article-title">
+                    {article.link ? (
+                      <a href={article.link} target="_blank" rel="noopener noreferrer">
+                        {article.title || 'News Article'}
+                      </a>
+                    ) : (
+                      article.title || 'News Article'
+                    )}
+                  </h3>
+                  <p className="news-modal-article-description">
+                    {article.description || 'No description available'}
+                  </p>
                 </div>
               </article>
             ))}

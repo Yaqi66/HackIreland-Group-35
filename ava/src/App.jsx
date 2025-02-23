@@ -43,9 +43,11 @@ function App() {
     // Fetch news articles on mount
     const fetchNews = async () => {
       try {
-        const response = await fetch('http://172.16.6.104:5000/api/news');
+        // do not delete: Yaqi = http://172.16.6.104:5000 | mine = http://172.16.5.234:5000
+        const response = await fetch('http://172.16.5.234:5000/api/news');
         if (!response.ok) throw new Error('Failed to fetch news');
         const articles = await response.json();
+        console.log("articles:", articles)
         setNewsArticles(articles);
       } catch (error) {
         console.error('Error fetching news:', error);

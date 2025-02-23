@@ -1,14 +1,27 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import useStore from '../store/useStore';
 import useMediaPlayer from './useMediaPlayer';
+import { useSupabase } from './useSupabase';
 
 const SILENCE_THRESHOLD = 0.01;
 const SILENCE_DURATION = 1000; // 1 seconds
-const GRACE_PERIOD = 1000; // 0.7 second
+const GRACE_PERIOD = 1000; // 1 second
 const MAX_RECORDING_DURATION = 10000; // 10 seconds
 
 const usePromptRecorder = () => {
-  const { setLastResponse, isListening, stopListening, setIsAwake, setActiveEmotion, setIsImageCarouselModalOpen, setIsNewsModalOpen, setActiveYoutubeUrl, setIsYoutubeModalOpen } = useStore();
+  const { 
+    setLastResponse, 
+    isListening, 
+    stopListening, 
+    setIsAwake, 
+    setActiveEmotion, 
+    setIsImageCarouselModalOpen, 
+    setIsNewsModalOpen, 
+    setActiveYoutubeUrl, 
+    setIsYoutubeModalOpen,
+    setNewsArticles 
+  } = useStore();
+  const { uploadImage } = useSupabase();
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorder = useRef(null);
   const recordedChunks = useRef([]);
@@ -87,7 +100,9 @@ const usePromptRecorder = () => {
       console.log("Sending video request with base64 data length:", base64Data.length);
 
       setActiveEmotion('thinking');
-      const response = await fetch('http://172.16.6.104:5000/api/process-video', {
+      // do not delete: Yaqi = http://172.16.6.104:5000 | mine = http://172.16.5.234:5000
+      // const response = await fetch('http://172.16.6.104:5000/api/process-video', {
+        const response = await fetch('http://172.16.5.234:5000/api/process-video', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,20 +118,40 @@ const usePromptRecorder = () => {
       console.log("Response data:", data);
 
       // Handle commands
-      if (data.success && data.command && data.command !== 'none') {
-        switch (data.command) {
+      if (data.success && data.command_response && data.command_response !== 'none') {
+        switch (data.command_response.type) {
           case 'news':
+            // Make a separate request to get news
+            try {
+              const newsResponse = await fetch('http://172.16.5.234:5000/api/news');
+              const newsData = await newsResponse.json();
+              if (newsData.success && newsData.news) {
+                setNewsArticles(newsData.news);
+              }
+            } catch (error) {
+              console.error('Error fetching news:', error);
+            }
             setIsNewsModalOpen(true);
             break;
-          case 'show_image':
+          case "show_image":
             setIsImageCarouselModalOpen(true);
             break;
-          case 'play_youtube_video':
-            setActiveYoutubeUrl("https://www.youtube.com/watch?v=fmg-Ks83Jy0");
+          case "play_youtube":
+            if (data.command_response.url && data.command_response.url.length > 0) {
+                setActiveYoutubeUrl(data.command_response.url);
+            }
+            else {
+                setActiveYoutubeUrl("https://www.youtube.com/watch?v=fmg-Ks83Jy0");
+            }
             setIsYoutubeModalOpen(true);
             break;
           case 'play_music':
-            setActiveYoutubeUrl("https://www.youtube.com/watch?v=qQzdAsjWGPg");
+            if (data.command_response.url && data.command_response.url.length > 0) {
+                setActiveYoutubeUrl(data.command_response.url);
+            }
+            else {
+                setActiveYoutubeUrl("https://www.youtube.com/watch?v=qQzdAsjWGPg");
+            }
             setIsYoutubeModalOpen(true);
             break;
         }
