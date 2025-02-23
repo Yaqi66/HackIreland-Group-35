@@ -1,46 +1,45 @@
 """
-Flask application for the Emotional Chat System
+Main application module for the emotional chat service
 """
+# Standard library imports
 import os
-import io
-import base64
-import logging
-import tempfile
-import shutil
-from pathlib import Path
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from dotenv import load_dotenv
-import json
-import traceback
-import time
-from .emotional_speech_agent import EmotionalSpeechAgent
-from .command_recognizer import CommandRecognizer
-from .audio_processor import AudioProcessor
-from .video_processor import split_video, cleanup_temp_files
-from .config import Config
-import subprocess
 import uuid
-from .command_recognizer import CommandRecognizer
-import requests
-from urllib.parse import quote
+import json
+import tempfile
+import traceback
+import logging
 import re
-from openai import OpenAI
+from pathlib import Path
+from urllib.parse import quote
 
-from . import emotional_speech_agent
+# Third-party imports
+from flask import Flask, request, jsonify, send_file
+from openai import OpenAI
+import requests
+from dotenv import load_dotenv
+import base64
+import shutil
+
+# Configure logging first
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
+# Local imports
+from src.emotional_speech_agent import EmotionalSpeechAgent
+from src.command_recognizer import CommandRecognizer
+from src.audio_processor import AudioProcessor
+from src.video_processor import split_video, cleanup_temp_files
+from src.config import Config
+from src.command_scraper import commandScraper
+
+# Initialize components
 app = Flask(__name__)
-CORS(app)
+command_scraper = commandScraper()  # Create instance at module level
 
-# Configure Flask to handle trailing slashes
+# Initialize Flask to handle trailing slashes
 app.url_map.strict_slashes = False
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize processors
 speech_agent = EmotionalSpeechAgent()
@@ -227,6 +226,11 @@ def process_video():
                     # Create command recognizer instance and get command
                     command_recognizer = CommandRecognizer(Config.OPENAI_API_KEY)
                     command = command_recognizer.recognize_command(asr_response['transcription'])
+                    command_response = None
+                    if command != 'none':
+                        command_response = command_scraper.get_response(command, asr_response['transcription'])
+                        if command_response:
+                            ai_response = command_scraper.get_conversation_response(asr_response['transcription'])
 
                     # Generate text-to-speech audio for the AI response
                     temp_audio_path = temp_dir / f"{uuid.uuid4()}.mp3"
@@ -244,12 +248,16 @@ def process_video():
                     # Return the complete result
                     result = {
                         'success': True,
-                        'emotions': emotion_result['emotions'], #all
-                        'speech_text': asr_response['transcription'], #Proper names
+                        'emotions': emotion_result['emotions'],
+                        'transcription': asr_response['transcription'],
                         'response': ai_response,
-                        'command': command,
                         'audio': audio_base64
                     }
+                    
+                    # Add command response if present
+                    if command_response:
+                        result['command_response'] = command_response
+
                     logging.info(f"Final result: {result}") #Logging and the proper return
                     return jsonify(result)
 
