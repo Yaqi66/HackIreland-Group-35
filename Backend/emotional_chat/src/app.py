@@ -19,6 +19,7 @@ import requests
 from dotenv import load_dotenv
 import base64
 import shutil
+from flask_cors import CORS
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -36,6 +37,7 @@ from src.command_scraper import commandScraper
 
 # Initialize components
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*", "allow_headers": "*", "expose_headers": "*"}})
 command_scraper = commandScraper()  # Create instance at module level
 
 # Initialize Flask to handle trailing slashes
@@ -230,7 +232,7 @@ def process_video():
                     if command != 'none':
                         command_response = command_scraper.get_response(command, asr_response['transcription'])
                         if command_response:
-                            ai_response = command_scraper.get_conversation_response(asr_response['transcription'])
+                            ai_response = "Yes, no problem!"
 
                     # Generate text-to-speech audio for the AI response
                     temp_audio_path = temp_dir / f"{uuid.uuid4()}.mp3"
@@ -241,7 +243,7 @@ def process_video():
                     )
                     response.stream_to_file(temp_audio_path)
 
-                    # Convert audio file to base64
+                    # Convert audio file to base64  
                     with open(temp_audio_path, 'rb') as audio_file:
                         audio_base64 = base64.b64encode(audio_file.read()).decode('utf-8')
 
@@ -426,14 +428,40 @@ def get_news():
             'success': True,
             'news': [
                 {
-                    'title': 'Technology News Update',
-                    'description': 'Latest developments in AI and machine learning.',
-                    'category': 'technology'
+                    'title': 'Flour power: the campaign to get real bread to more people',
+                    'description': 'Its puns are many, its passion for better bread singular. The Real Bread Campaign aims to improve loaves for everyone, whether you\'re interested in local food, transparent labelling, therapeutic baking or just tasty toast, finds Robert Penn.',
+                    'link': 'https://www.positive.news/society/the-campaign-to-democratise-real-bread',
+                    'image': 'https://www.positive.news/wp-content/uploads/2024/10/Screenshot-2025-02-17-at-12.43.18-min-1800x0-c-center.jpg',
                 },
                 {
-                    'title': 'World News Headlines',
-                    'description': 'Current events from around the globe.',
-                    'category': 'world'
+                    'title': '\'Lush bread - for all.\' Placing affordable loaves where they\'re most needed',
+                    'description': 'Since November 2022, Smith has sold the \'JustBread\' loaves - leavened with baker\'s yeast, baked in a tin and sold sliced - from a mobile food shop, as well as from the project\'s community freezer, for just 75p. This makes it cheaper than brand-name loaves and all but the very cheapest \'value\' range supermarket own-brand options.',
+                    'link': 'https://www.positive.news/environment/lush-bread-for-all-placing-affordable-loaves-where-theyre-most-needed',
+                    'image': 'https://www.positive.news/wp-content/uploads/2025/02/WhatsApp-Image-2024-05-22-at-12.00.49-1-e1739802237463-1800x0-c-center.jpg',
+                },
+                {
+                    'title': 'Green Thumbs and Golden Fields: Community Gardens Bloom Nationwide',
+                    'description': 'Urban spaces are transforming into thriving community gardens. Residents are cultivating fresh produce, sharing sustainable practices, and building community ties that brighten neighborhoods across the country.',
+                    'link': 'https://www.positive.news/environment/community-gardens-bloom',
+                    'image': 'https://www.positive.news/wp-content/uploads/2025/02/community-garden-bloom-1800x0-c-center.jpg'
+                },
+                {
+                    'title': 'Brighter Horizons: Solar Energy Lights Up Rural Villages',
+                    'description': 'Renewable energy projects are sparking hope in remote communities. Innovative solar initiatives are providing reliable power, fueling local businesses, and paving the way for a sustainable future.',
+                    'link': 'https://www.positive.news/technology/solar-energy-rural-villages',
+                    'image': 'https://www.positive.news/wp-content/uploads/2025/02/solar-energy-village-1800x0-c-center.jpg'
+                },
+                {
+                    'title': 'Hope on Wheels: Mobile Clinics Bring Health and Happiness to Remote Areas',
+                    'description': 'Mobile clinics are bridging healthcare gaps by bringing essential medical services to underserved regions. These initiatives ensure that even isolated communities receive quality care, fostering a healthier tomorrow.',
+                    'link': 'https://www.positive.news/health/hope-on-wheels-mobile-clinics',
+                    'image': 'https://www.positive.news/wp-content/uploads/2025/02/mobile-clinic-1800x0-c-center.jpg'
+                },
+                {
+                    'title': 'Joy in Java: Local Coffee Cooperatives Brew Up Change',
+                    'description': 'Local coffee cooperatives are transforming the industry by empowering farmers and strengthening communities. Their sustainable practices are not only producing great coffee but also inspiring social change.',
+                    'link': 'https://www.positive.news/society/joy-in-java-coffee-cooperatives',
+                    'image': 'https://www.positive.news/wp-content/uploads/2025/02/coffee-cooperative-1800x0-c-center.jpg'
                 }
             ]
         }

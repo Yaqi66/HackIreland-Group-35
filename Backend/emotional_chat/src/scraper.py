@@ -24,11 +24,30 @@ class Command:
 
 class Scraper:
     @staticmethod
-    def execute_command(command: Command) -> Optional[List[str]]:
+    def execute_command(command: Command) -> Optional[List[Dict[str, str]]]:
         """Execute a command and return the result"""
         if command.name == "get_news":
-            # Simplified news fetching
-            return ["Sample news article 1", "Sample news article 2"]
+            # Return properly formatted news articles
+            return [
+                {
+                    "title": "Healthcare Innovations: New Breakthroughs in Patient Care",
+                    "description": "Recent advancements in healthcare technology are revolutionizing patient care in nursing homes, focusing on improved quality of life and social interaction.",
+                    "link": "https://example.com/healthcare-news",
+                    "image": "https://example.com/healthcare-image.jpg"
+                },
+                {
+                    "title": "Community Events: Local Senior Center Hosts Art Exhibition",
+                    "description": "Local senior center showcases artistic talents of residents in a week-long exhibition, highlighting the importance of creative expression in elderly care.",
+                    "link": "https://example.com/community-news",
+                    "image": "https://example.com/community-image.jpg"
+                },
+                {
+                    "title": "Wellness Tips: Staying Active in Your Golden Years",
+                    "description": "Health experts share easy and effective ways for seniors to maintain physical and mental wellness through simple daily activities and social engagement.",
+                    "link": "https://example.com/wellness-news",
+                    "image": "https://example.com/wellness-image.jpg"
+                }
+            ]
         elif command.name == "play_youtube":
             url = search_youtube(command.parameters.get("query", ""))
             return [f"Youtube video presented successfully: {url}"] if url else None

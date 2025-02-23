@@ -23,7 +23,7 @@ Examples:
 User Speech: play a song
 Answer: play_music
 User Speech: play a video
-Answer: play_youtube_video
+Answer: play_youtube
 User Speech: show me my pictures
 Answer: show_image
 User Speech: get news

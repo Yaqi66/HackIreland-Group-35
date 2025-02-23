@@ -19,7 +19,7 @@ class commandScraper:
             "news": "get_news",
             "play_music": "play_youtube",
             "show_image": "show_image",
-            "play_youtube_video": "play_youtube"
+            "play_youtube": "play_youtube"
         }
         self.messages = []
 
