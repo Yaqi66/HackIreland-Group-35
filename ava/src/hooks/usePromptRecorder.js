@@ -8,7 +8,7 @@ const GRACE_PERIOD = 1000; // 0.7 second
 const MAX_RECORDING_DURATION = 10000; // 10 seconds
 
 const usePromptRecorder = () => {
-  const { setLastResponse, isListening, stopListening, setIsAwake, setActiveEmotion } = useStore();
+  const { setLastResponse, isListening, stopListening, setIsAwake, setActiveEmotion, setIsImageCarouselModalOpen, setIsNewsModalOpen, setActiveYoutubeUrl, setIsYoutubeModalOpen } = useStore();
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorder = useRef(null);
   const recordedChunks = useRef([]);
@@ -87,7 +87,7 @@ const usePromptRecorder = () => {
       console.log("Sending video request with base64 data length:", base64Data.length);
 
       setActiveEmotion('thinking');
-      const response = await fetch('http://172.16.5.234:5000/api/process-video', {
+      const response = await fetch('http://172.16.6.104:5000/api/process-video', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,6 +101,26 @@ const usePromptRecorder = () => {
       const data = await response.json();
       setActiveEmotion('very-happy');
       console.log("Response data:", data);
+
+      // Handle commands
+      if (data.success && data.command && data.command !== 'none') {
+        switch (data.command) {
+          case 'news':
+            setIsNewsModalOpen(true);
+            break;
+          case 'show_image':
+            setIsImageCarouselModalOpen(true);
+            break;
+          case 'play_youtube_video':
+            setActiveYoutubeUrl("https://www.youtube.com/watch?v=fmg-Ks83Jy0");
+            setIsYoutubeModalOpen(true);
+            break;
+          case 'play_music':
+            setActiveYoutubeUrl("https://www.youtube.com/watch?v=qQzdAsjWGPg");
+            setIsYoutubeModalOpen(true);
+            break;
+        }
+      }
 
       // Play the audio response if available
       if (data.success && data.audio) {

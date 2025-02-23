@@ -216,8 +216,8 @@ const useWakeWordRecorder = () => {
       console.log("Converting wav to base64...");
       const base64Data = await blobToBase64(wavBlob);
       console.log("Sending wake word request with base64 data length:", base64Data.length);
-      // do not delete: http://172.16.6.104:5000
-      const response = await fetch('http://172.16.5.234:5000/api/detect-wake-word', {
+      // do not delete: Yaqi = http://172.16.6.104:5000 | mine = http://172.16.5.234:5000
+      const response = await fetch('http://172.16.6.104:5000/api/detect-wake-word', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
