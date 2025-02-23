@@ -2,27 +2,77 @@ import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
 from openai import OpenAI
+from dataclasses import dataclass
 import os
 import pyttsx3
+from typing import List, Dict, Any, Tuple
 import webbrowser
 import requests
 import re
-import json
 from urllib.parse import quote
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
-from database import get_patients
-
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+from .database import get_patients, supabase as supabase_client, download_file, upload_file_to_bucket
+from supabase import Client as SupabaseClient
+from werkzeug.utils import secure_filename
+from storage3.exceptions import StorageApiError
 
 # Load environment variables
 load_dotenv()
 
 # Initialize OpenAI client
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 # Initialize text-to-speech engine
 engine = pyttsx3.init()
 engine.setProperty('rate', 150)
+
+class ScraperBucket:
+    """
+    A class designed to cache the sites that we're scraping
+    """
+    
+    def __init__(self, bucket_name: str, client: SupabaseClient):
+        self.bucket_name = bucket_name
+        self.supabase_client = client
+    
+    def scrape_page(self, url: str) -> BeautifulSoup:
+        url_key = secure_filename(url)
+        try:
+            data = download_file(self.bucket_name, url_key)
+        except StorageApiError as e:
+            if int(e.status) != 404:
+                # bubble the error
+                raise e
+            print(f'Could not find {url} in cache, going to download it')
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(url, headers=headers)
+            upload_file_to_bucket(response.content, self.bucket_name, url_key)
+            data = response.content
+        return BeautifulSoup(data, features="html.parser")
+
+class GoodNewsNetworkScraper:
+    """A class that scrapes 'https://www.goodnewsnetwork.org/'"""
+    
+    def __init__(self, scraper: ScraperBucket):
+        self.scraper = scraper
+
+    def get_news_articles(self) -> List[str]:
+        """Get positive news stories from Good News Network"""
+        
+        soup = self.scraper.scrape_page("https://www.goodnewsnetwork.org/")
+        headlines = [header.find('a') for header in soup.find_all(class_='entry-title')]
+        articles = []
+        for headline in headlines[:5]:
+            article_soup = scraper_bucket.scrape_page(headline['href'])
+            paragraphs = [p.text for p in article_soup.find(class_='td-post-content').find_all('p')]
+            articles.append("\n\n".join(paragraphs[:5]))
+        return articles
+        
+scraper_bucket = ScraperBucket(bucket_name="scraper-cache", client=supabase_client)
+good_news_network_scraper = GoodNewsNetworkScraper(scraper=scraper_bucket)
 
 class Conversation:
     def __init__(self, patient):
@@ -45,21 +95,21 @@ You are able to invoke particular tools on request of the patient. Feel free to 
 
 ## Guidelines for General Questions
 
-- Give clear, concise, and accurate answers
 - Be conversational and friendly
+- Keep responses natural and conversational
+- Give clear, concise, and accurate answers
+- You are to refer to and greet the patient by name.
 - If relevant, offer to show related images or videos
-- Keep responses under 3-4 sentences unless more detail is specifically requested
-- Reference previous parts of the conversation when relevant
 - Use patient notes to provide context
+- Keep responses under 3-4 sentences unless more detail is specifically requested
+- You **NEVER** attempt produce news items without using the get_news function. Doing so leads to the risk of feeding false information to the patient.
 
 ## Remember
 
-- You are to refer to and greet the patient by name.
-- For media requests (play, watch, show, see), ALWAYS include the appropriate command
 - For questions, give a brief answer first, then optionally suggest relevant media
-- Keep responses natural and conversational
 - Use the conversation history to provide more contextual and relevant responses
-- IF THERE IS SOMETHING IN THE PATIENT NOTES THAT MIGHT BE USEFUL, MAKE SURE THAT YOU USE THE PATIENT NOTES
+- For media requests (play, watch, show, see, get news), **ALWAYS** include the appropriate command
+- If there is something in the patient notes that might be useful, you use them
 
 ## Patient Notes
 
@@ -80,21 +130,15 @@ The patient's name is {patient['name']}.
         if len(self.messages) > 11:  # 1 system message + 10 conversation messages
             self.messages = [self.messages[0]] + self.messages[-10:]
 
-    def get_response(self, user_input):
+    def get_response(self):
         """Get a response from ChatGPT based on the conversation history"""
         try:
-            # Add user's input to conversation
-            self.add_message("user", user_input)
-
             # Get response from ChatGPT
             response = client.chat.completions.create(model="gpt-3.5-turbo", messages=self.messages)
-
             # Get the assistant's response
             assistant_response = response.choices[0].message.content
-
             # Add assistant's response to conversation
             self.add_message("assistant", assistant_response)
-
             return assistant_response
 
         except Exception as e:
@@ -145,65 +189,24 @@ def search_image(query):
         print(f"Error searching for images: {e}")
         return False
 
-def get_news_headlines():
-    """Get positive news stories from Good News Network"""
-    try:
-        # Good News Network main URL
-        url = "https://www.goodnewsnetwork.org/"
+@dataclass
+class Command:
+    name: str
+    parameters: Dict[str, Any]
 
-        # Send request with headers to mimic a browser
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
+    def format_parameters(self) -> str:
+        return ", ".join(f"{key}={value}" for key, value in self.parameters.items())
+    
+    def start_output_sign(self) -> str:
+        return f"[START COMMAND OUTPUT:{self.name} {self.format_parameters()}]"
 
-        # Find news headlines from the main content area
-        headlines = []
-        articles = soup.find_all('article', class_='post')[:5]  # Get first 5 articles
+    def end_output_sign(self) -> str:
+        return f"[END COMMAND OUTPUT:{self.name} {self.format_parameters()}]"
 
-        for article in articles:
-            # Get the headline
-            headline_elem = article.find('h3', class_='entry-title') or article.find('h2', class_='entry-title')
-            if headline_elem:
-                headline = headline_elem.get_text().strip()
-                # Get the date if available
-                date_elem = article.find('time', class_='entry-date')
-                date = date_elem.get_text().strip() if date_elem else ""
-
-                if headline:
-                    headlines.append((headline, date))
-
-        if headlines:
-            news_text = "Here are some positive news stories for you:\n\n"
-            for i, (headline, date) in enumerate(headlines, 1):
-                date_text = f" [{date}]" if date else ""
-                news_text += f"{i}.{date_text} {headline}\n"
-            return news_text
-        else:
-            return "Sorry, I couldn't find any positive news stories at the moment. Please try again later."
-
-    except Exception as e:
-        print(f"Error getting headlines: {e}")
-        return "Sorry, I couldn't fetch the good news right now. Please try again later."
-
-def execute_command(command):
-    """Execute a command from the AI response"""
-    if command.get("type") == "play_youtube":
-        return search_youtube(command["query"])
-    elif command.get("type") == "show_image":
-        return search_image(command["query"])
-    elif command.get("type") == "get_news":
-        headlines = get_news_headlines()
-        print(f"\n{headlines}")
-        speak_text("Here are the latest headlines.")
-        return True
-    return False
-
-def parse_commands(response):
+def parse_commands(response: str) -> Tuple[str, List[Command]]:
     """Parse the response for any commands"""
-    import re
     commands = []
+    
     # Look for commands in the format: [COMMAND:type=play_youtube,query=Frank Sinatra]
     command_pattern = r'\[COMMAND:([^\]]+)\]'
     matches = re.finditer(command_pattern, response)
@@ -214,11 +217,24 @@ def parse_commands(response):
         for param in command_str.split(','):
             key, value = param.split('=')
             command[key.strip()] = value.strip()
-        commands.append(command)
+        commands.append(Command(name=command.pop("type"), parameters=command))
 
     # Remove the command text from the response
     clean_response = re.sub(command_pattern, '', response)
     return clean_response, commands
+
+def execute_command(command: Command) -> str:
+    """Execute a command from the AI response and returns context for the LLM to use"""
+    if command.name == "play_youtube":
+        search_youtube(command.parameters["query"])
+        return "Youtube video presented successfully"
+    elif command.name == "show_image":
+        search_image(command.parameters["query"])
+        # TODO: USE CLIP OR SOMETHING TO PROVIDE IMAGE UNDERSTANDING
+        return "Image searched successfully"
+    elif command.name == "get_news":
+        return "\n---\n".join(good_news_network_scraper.get_news_articles())
+    return f"Could not find any command suitable for the invocation '{command}'"
 
 def get_user_input(dev_mode=False):
     """Get user input either through voice or text"""
@@ -237,10 +253,7 @@ def get_user_input(dev_mode=False):
 def record_audio(duration=5, sample_rate=44100):
     """Record audio from microphone"""
     print(f"Recording for {duration} seconds...")
-    recording = sd.rec(int(duration * sample_rate), 
-                      samplerate=sample_rate, 
-                      channels=1,
-                      dtype=np.int16)
+    recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
     sd.wait()
     return recording, sample_rate
 
@@ -262,13 +275,10 @@ def transcribe_audio(filename):
         if os.path.exists(filename):
             os.remove(filename)
 
-
 def load_patient_info():
     """Load patient information from JSON file"""
-
+    
     return get_patients()[0]
-
-
 
 def greet_patient():
     """Greet the patient by name"""
@@ -282,7 +292,6 @@ def main():
     dev_mode = True  # Start in development mode by default
     print("Currently in DEVELOPMENT MODE (typing). Say 'switch' to toggle voice mode.")
 
-
     patient = load_patient_info()
 
     # Greet the patient
@@ -290,8 +299,7 @@ def main():
 
     # Initialize conversation
     conversation = Conversation(patient)
-
-
+    
     while True:
         try:
             if not dev_mode:
@@ -311,26 +319,45 @@ def main():
                 print(f"\nYou {'typed' if dev_mode else 'said'}: {text}")
 
                 # Get ChatGPT response using conversation history
-                response = conversation.get_response(text)
+                conversation.add_message("user", text)
+                response = conversation.get_response()
+                print("Raw response is:", response)
                 if response:
                     # Parse any commands in the response
                     clean_response, commands = parse_commands(response)
 
+                    command_outputs = []
+
                     # Execute any commands
                     for command in commands:
-                        execute_command(command)
+                        command_output = execute_command(command)
+                        full_tool_context = f"""{command.start_output_sign()}
+{command_output}
+{command.end_output_sign()}"""
+                        print(f"Raw log adding tool: {full_tool_context}")
+                        command_outputs.append(full_tool_context)
+                        conversation.add_message("assistant", command_output)
 
                     # Speak and print the clean response
                     print(f"\nAssistant: {clean_response}\n")
                     speak_text(clean_response)
 
+                    next_response = conversation.get_response()
+                    print(f"\nAssistant: {next_response}\n")
+                    conversation.add_message("assistant", next_response)
+
         except KeyboardInterrupt:
             print("\nExiting voice assistant...")
             speak_text("Goodbye!")
             break
+        
         except Exception as e:
             print(f"An error occurred: {e}")
             speak_text("Sorry, an error occurred.")
+
+def test_command_invocation():
+    command = Command(name="get_news", parameters={"hello":"world"})
+    print(command.dump())
 
 if __name__ == "__main__":
     main()
