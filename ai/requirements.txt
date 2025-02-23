@@ -8,3 +8,4 @@ requests
 Pillow
 pygame
 beautifulsoup4
+supabase

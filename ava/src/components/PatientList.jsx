@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import Patient from './Patient'
 
 export default function PatientList({ user }) {
@@ -16,6 +16,7 @@ export default function PatientList({ user }) {
     gender: '',
     notes: ''
   });
+    const navigate = useNavigate();
 
   useEffect(() => {
       loadPatients();
@@ -82,6 +83,7 @@ export default function PatientList({ user }) {
                   <ul>
                       {patients.map(patient => <li key={patient['id']} class="patient-pane" onClick={() => setActivePatient(patient)}>{patient['name']}</li>)}
                   </ul>
+                  <Link to="/">To Main System</Link>
               </div>)
         }
         {patients.length === 0 && (<div className="no-images">No patients registered</div>)}
