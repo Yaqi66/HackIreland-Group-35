@@ -22,6 +22,9 @@ from .config import Config
 import subprocess
 import uuid
 from .command_recognizer import CommandRecognizer
+import requests
+from urllib.parse import quote
+import re
 
 from . import emotional_speech_agent
 
@@ -272,6 +275,56 @@ def chat():
         logging.exception("Error in chat endpoint:")
         return jsonify({
             'error': 'Failed to process message',
+            'details': str(e)
+        }), 500
+
+@app.route('/api/search-youtube', methods=['POST'])
+def search_youtube():
+    """
+    Search YouTube and return the first video ID
+    Expects JSON with 'query' field
+    Returns video ID and URL
+    """
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+            
+        data = request.get_json()
+        if 'query' not in data:
+            return jsonify({'error': 'Missing query field'}), 400
+
+        query = data['query']
+        
+        # Search for the video
+        search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(search_url, headers=headers)
+
+        # Extract video ID using regex
+        video_ids = re.findall(r"watch\?v=(\S{11})", response.text)
+
+        if video_ids:
+            # Get the first video ID
+            video_id = video_ids[0]
+            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            
+            return jsonify({
+                'success': True,
+                'video_id': video_id,
+                'video_url': video_url
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No videos found'
+            }), 404
+
+    except Exception as e:
+        logging.exception("Error in YouTube search:")
+        return jsonify({
+            'error': 'Failed to search YouTube',
             'details': str(e)
         }), 500
 
