@@ -6,21 +6,18 @@ import AudioWave from "./components/AudioWave";
 import useStore from "./store/useStore";
 import { useSupabase } from "./hooks/useSupabase";
 import AuthModal from "./components/AuthModal";
-import PatientList from "./components/PatientList";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Link,
-  Navigate,
-} from "react-router-dom";
 import useWakeWordRecorder from "./hooks/useWakeWordRecorder";
 import ImagesPreview from "./components/ImagesPreview";
 import YoutubePreview from "./components/YoutubePreview";
+import ImageCarouselModal from "./components/ImageCarouselModal";
+import YoutubeModal from "./components/YoutubeModal";
+import NewsPreview from "./components/NewsPreview";
+import NewsModal from "./components/NewsModal";
 
 function App() {
-  const { isAwake, isListening } = useStore();
+  const { isAwake, isListening, activeYoutubeUrl, setActiveYoutubeUrl, isYoutubeModalOpen, setIsYoutubeModalOpen, setNewsArticles, isNewsModalOpen, setIsNewsModalOpen } = useStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isImageCarouselModalOpen, setIsImageCarouselModalOpen] = useState(false);
   const { user, signOut } = useSupabase();
   const { startWakeWordRecording, stopRecording } = useWakeWordRecorder();
 
@@ -42,6 +39,22 @@ function App() {
     }
   }, [isAwake, user, startWakeWordRecording, stopRecording, isListening]);
 
+  useEffect(() => {
+    // Fetch news articles on mount
+    const fetchNews = async () => {
+      try {
+        const response = await fetch('http://172.16.6.104:5000/api/news');
+        if (!response.ok) throw new Error('Failed to fetch news');
+        const articles = await response.json();
+        setNewsArticles(articles);
+      } catch (error) {
+        console.error('Error fetching news:', error);
+      }
+    };
+
+    fetchNews();
+  }, [setNewsArticles]);
+
   return (
     <div className={`app-container ${isAwake ? "listening" : "not-listening"}`}>
       {user && (
@@ -51,14 +64,21 @@ function App() {
       )}
       <div className="left-container horizontal-container">
         <div className="top-container left-top corner vertical-container">
-          <div className={`suggestion-box top-left ${isAwake ? "show" : ""}`}>
+          <div 
+            className={`suggestion-box top-left ${isAwake ? "show" : ""}`}
+            onClick={() => setIsImageCarouselModalOpen(true)}
+          >
             <ImagesPreview />
           </div>
         </div>
         <div className="center-container left-center vertical-container"></div>
         <div className="bottom-container left-bottom corner vertical-container">
-          <div
+          <div 
             className={`suggestion-box bottom-left ${isAwake ? "show" : ""}`}
+            onClick={() => {
+              setActiveYoutubeUrl("https://www.youtube.com/watch?v=fmg-Ks83Jy0");
+              setIsYoutubeModalOpen(true);
+            }}
           >
             <YoutubePreview url="https://www.youtube.com/watch?v=fmg-Ks83Jy0" />
           </div>
@@ -76,20 +96,39 @@ function App() {
       </div>
       <div className="right-container horizontal-container">
         <div className="top-container right-top corner vertical-container">
-          <div className={`suggestion-box top-right ${isAwake ? "show" : ""}`}>
+          <div 
+            className={`suggestion-box top-right ${isAwake ? "show" : ""}`}
+            onClick={() => {
+              setActiveYoutubeUrl("https://www.youtube.com/watch?v=qQzdAsjWGPg");
+              setIsYoutubeModalOpen(true);
+            }}
+          >
             <YoutubePreview url="https://www.youtube.com/watch?v=qQzdAsjWGPg" />
           </div>
         </div>
         <div className="center-container right-center vertical-container"></div>
         <div className="bottom-container right-bottom corner vertical-container">
-          <div
+          <div 
             className={`suggestion-box bottom-right ${isAwake ? "show" : ""}`}
+            onClick={() => setIsNewsModalOpen(true)}
           >
-            {/* <VideoPreview stream={videoStream} /> */}
-            {/* {error && <div className="error-message">{error}</div>} */}
+            <NewsPreview />
           </div>
         </div>
       </div>
+      <ImageCarouselModal 
+        isOpen={isImageCarouselModalOpen}
+        onClose={() => setIsImageCarouselModalOpen(false)}
+      />
+      <YoutubeModal
+        isOpen={isYoutubeModalOpen}
+        onClose={() => setIsYoutubeModalOpen(false)}
+        videoUrl={activeYoutubeUrl}
+      />
+      <NewsModal
+        isOpen={isNewsModalOpen}
+        onClose={() => setIsNewsModalOpen(false)}
+      />
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => user && setShowAuthModal(false)}

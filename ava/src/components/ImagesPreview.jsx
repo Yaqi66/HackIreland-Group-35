@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useSupabase } from '../hooks/useSupabase';
-import ImageViewer from './ImageViewer';
 
 const ImagesPreview = () => {
   const [images, setImages] = useState([]);
   const { user } = useSupabase();
-  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -72,27 +70,16 @@ const ImagesPreview = () => {
   }
 
   return (
-    <>
-      <div 
-        className={`images-preview ${getGridClass()}`} 
-        onClick={() => setIsViewerOpen(true)}
-      >
-        {images.map((url, index) => (
-          <img 
-            key={index}
-            src={url}
-            alt={`Preview ${index + 1}`}
-            className="preview-image"
-          />
-        ))}
-      </div>
-      
-      <ImageViewer 
-        images={images}
-        isOpen={isViewerOpen}
-        onClose={() => setIsViewerOpen(false)}
-      />
-    </>
+    <div className={`images-preview ${getGridClass()}`}>
+      {images.map((url, index) => (
+        <img 
+          key={index}
+          src={url}
+          alt={`Preview ${index + 1}`}
+          className="preview-image"
+        />
+      ))}
+    </div>
   );
 };
 

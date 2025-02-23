@@ -1,43 +1,39 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
+import '../styles/HappyAvatar.css';
 
-function HappyAvatar() {
-  const [eyeHeight, setEyeHeight] = useState(11); // Default eye height from SVG
+const HappyAvatar = () => {
   const [isBlinking, setIsBlinking] = useState(false);
-  const blinkTimeoutRef = useRef(null);
-  const { isListening } = useStore();
-
-  const getRandomInterval = () => {
-    // Random interval between 4 and 8 seconds
-    return Math.random() * 4000 + 4000;
+  const { activeEmotion, isListening } = useStore();
+  
+  // Eye dimensions based on emotion
+  const eyeHeight = activeEmotion === 'thinking' ? 4 : 11;
+  const eyeWidth = activeEmotion === 'thinking' ? 9 : 6.5;
+  
+  // Mouth scale based on emotion
+  const getMouthScale = () => {
+    switch (activeEmotion) {
+      case 'thinking':
+        return 0.7;
+      case 'very-happy':
+        return 1.5;
+      default: // happy
+        return 1;
+    }
   };
 
-  const blink = () => {
-    // Close eyes
-    setEyeHeight(1);
-    setIsBlinking(true);
-    
-    // Open eyes after 150ms
-    setTimeout(() => {
-      setEyeHeight(11);
-      setIsBlinking(false);
-      
-      // Schedule next blink
-      blinkTimeoutRef.current = setTimeout(blink, getRandomInterval());
-    }, 150);
-  };
+  const mouthScale = getMouthScale();
 
   useEffect(() => {
-    // Start blinking
-    blinkTimeoutRef.current = setTimeout(blink, getRandomInterval());
+    if (activeEmotion === 'thinking') return;
 
-    // Cleanup
-    return () => {
-      if (blinkTimeoutRef.current) {
-        clearTimeout(blinkTimeoutRef.current);
-      }
-    };
-  }, []);
+    const blinkInterval = setInterval(() => {
+      setIsBlinking(true);
+      setTimeout(() => setIsBlinking(false), 150);
+    }, Math.random()*4000 + 4000);
+
+    return () => clearInterval(blinkInterval);
+  }, [activeEmotion]);
 
   return (
     <svg width="300" height="300" viewBox="0 0 276 276" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -54,27 +50,34 @@ function HappyAvatar() {
         <circle cx="137.999" cy="138" r="76" fill="url(#paint1_radial_45_2)"/>
       </g>
       <circle cx="137.999" cy="138" r="75.5" stroke="white"/>
-      <g filter="url(#filter4_d_45_2)">
+      <g filter="url(#filter4_d_45_2)" className="avatar-eyes">
         <ellipse 
           cx="111.499" 
           cy="122" 
-          rx="6.5" 
+          rx={eyeWidth} 
           ry={eyeHeight} 
           fill="white"
           className={isBlinking ? "blink" : ""}
         />
       </g>
-      <g filter="url(#filter5_d_45_2)">
+      <g filter="url(#filter5_d_45_2)" className="avatar-eyes">
         <ellipse 
           cx="164.499" 
           cy="122" 
-          rx="6.5" 
+          rx={eyeWidth} 
           ry={eyeHeight} 
           fill="white"
           className={isBlinking ? "blink" : ""}
         />
       </g>
-      <g filter="url(#filter6_d_45_2)">
+      <g 
+        filter="url(#filter6_d_45_2)" 
+        className="avatar-mouth"
+        style={{ 
+          transform: `scaleX(${mouthScale}) ${activeEmotion === "very-happy" ? `scaleY(${2})` : ""}`,
+          transformOrigin: 'center 168px' // Center the scaling around the middle of the mouth
+        }}
+      >
         <path d="M138.07 164.952C131.995 164.952 126.999 162.286 126.999 165.876C126.999 169.466 131.924 172.376 137.999 172.376C144.074 172.376 148.999 169.466 148.999 165.876C148.999 162.286 144.145 164.952 138.07 164.952Z" fill="white"/>
       </g>
       <defs>
@@ -163,6 +166,6 @@ function HappyAvatar() {
       </defs>
     </svg>
   );
-}
+};
 
 export default HappyAvatar;

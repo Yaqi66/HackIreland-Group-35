@@ -14,16 +14,20 @@ from dotenv import load_dotenv
 import json
 import traceback
 import time
-import openai
-import threading
-import queue
-import uuid
 from .emotional_speech_agent import EmotionalSpeechAgent
 from .command_recognizer import CommandRecognizer
 from .audio_processor import AudioProcessor
 from .video_processor import split_video, cleanup_temp_files
 from .config import Config
-from .ThreadWithReturnValue import ThreadWithReturnValue
+import subprocess
+import uuid
+from .command_recognizer import CommandRecognizer
+import requests
+from urllib.parse import quote
+import re
+from openai import OpenAI
+
+from . import emotional_speech_agent
 
 # Load environment variables
 load_dotenv()
@@ -50,6 +54,8 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 for path in [Config.UPLOAD_FOLDER, Config.TEMP_FOLDER, Config.RECORDINGS_FOLDER]:
     path.mkdir(parents=True, exist_ok=True)
 
+# Initialize OpenAI client
+client = OpenAI()
 
 @app.route('/')
 def index(): #basic get check for the server status, if can connect
@@ -206,29 +212,43 @@ def process_video():
                             'error': error_msg
                         }), 500
 
-                    command_recognizer = CommandRecognizer(Config.OPENAI_API_KEY) #Set base
+                    # Get AI response
+                    ai_response = speech_agent.get_response(
+                        asr_response['transcription'],
+                        {'dominant_emotion': emotion_result['emotions']['dominant']}
+                    )
+                    if not ai_response:
+                        logging.error("Failed to get AI response")
+                        return jsonify({
+                            'success': False,
+                            'error': 'Failed to generate AI response'
+                        }), 500
 
-                    #Here are our methods.
-                    get_response_thread = ThreadWithReturnValue(target=process_get_response, args=(speech_agent, asr_response['transcription'], emotion_result))
-                    get_command_thread = ThreadWithReturnValue(target=process_get_command, args=(command_recognizer, asr_response['transcription'])) #Set command recognizer.
+                    # Create command recognizer instance and get command
+                    command_recognizer = CommandRecognizer(Config.OPENAI_API_KEY)
+                    command = command_recognizer.recognize_command(asr_response['transcription'])
 
-                    start = time.time()
-                    get_response_thread.start() #Set first thread
-                    get_command_thread.start() #Set second
+                    # Generate text-to-speech audio for the AI response
+                    temp_audio_path = temp_dir / f"{uuid.uuid4()}.mp3"
+                    response = client.audio.speech.create(
+                        model="tts-1",
+                        voice="alloy",
+                        input=ai_response
+                    )
+                    response.stream_to_file(temp_audio_path)
 
-                    #Get results.
-                    ai_response = get_response_thread.join() #set values for all the code
-                    command = get_command_thread.join()
+                    # Convert audio file to base64
+                    with open(temp_audio_path, 'rb') as audio_file:
+                        audio_base64 = base64.b64encode(audio_file.read()).decode('utf-8')
 
-                    end = time.time()
-                    print (f"Thread time: {end - start}")
-
-                    result = { #Build object.
+                    # Return the complete result
+                    result = {
                         'success': True,
                         'emotions': emotion_result['emotions'], #all
                         'speech_text': asr_response['transcription'], #Proper names
                         'response': ai_response,
-                        'command': command
+                        'command': command,
+                        'audio': audio_base64
                     }
                     logging.info(f"Final result: {result}") #Logging and the proper return
                     return jsonify(result)
@@ -301,7 +321,57 @@ def chat():
             'details': str(e)
         }), 500
 
-@app.route('/api/process-emotion', methods=['POST']) #API request to send to models and get process from AI set.
+@app.route('/api/search-youtube', methods=['POST'])
+def search_youtube():
+    """
+    Search YouTube and return the first video ID
+    Expects JSON with 'query' field
+    Returns video ID and URL
+    """
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+            
+        data = request.get_json()
+        if 'query' not in data:
+            return jsonify({'error': 'Missing query field'}), 400
+
+        query = data['query']
+        
+        # Search for the video
+        search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(search_url, headers=headers)
+
+        # Extract video ID using regex
+        video_ids = re.findall(r"watch\?v=(\S{11})", response.text)
+
+        if video_ids:
+            # Get the first video ID
+            video_id = video_ids[0]
+            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            
+            return jsonify({
+                'success': True,
+                'video_id': video_id,
+                'video_url': video_url
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No videos found'
+            }), 404
+
+    except Exception as e:
+        logging.exception("Error in YouTube search:")
+        return jsonify({
+            'error': 'Failed to search YouTube',
+            'details': str(e)
+        }), 500
+
+@app.route('/api/process-emotion', methods=['POST'])
 def process_emotion():
     """ #DocStrings
     Process video frame for emotion detection

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 function VideoPreview({ stream }) {
   const videoRef = useRef(null);
@@ -12,13 +12,16 @@ function VideoPreview({ stream }) {
   if (!stream) return null;
 
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      playsInline
-      muted
-      className="video-preview"
-    />
+    <div className="video-preview-container">
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="video-preview"
+      />
+      <div className="video-interactive-cover"></div>
+    </div>
   );
 }
 
