@@ -21,6 +21,7 @@ from .video_processor import split_video, cleanup_temp_files
 from .config import Config
 import subprocess
 import uuid
+from .command_recognizer import CommandRecognizer
 
 from . import emotional_speech_agent
 
@@ -191,12 +192,17 @@ def process_video():
                             'error': 'Failed to generate AI response'
                         }), 500
 
+                    # Create command recognizer instance and get command
+                    command_recognizer = CommandRecognizer(Config.OPENAI_API_KEY)
+                    command = command_recognizer.recognize_command(asr_response['transcription'])
+
                     # Return the complete result
                     result = {
                         'success': True,
                         'emotions': emotion_result['emotions'],
                         'speech_text': asr_response['transcription'],
-                        'response': ai_response
+                        'response': ai_response,
+                        'command': command
                     }
                     logging.info(f"Final result: {result}")
                     return jsonify(result)
