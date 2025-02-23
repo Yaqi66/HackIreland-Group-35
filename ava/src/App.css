@@ -76,7 +76,7 @@
 }
 
 .center-container {
-  flex: 0.2;
+  flex: 0.07;
   height: 20%;
 }
 
@@ -88,7 +88,7 @@
 .suggestion-box {
   background: rgba(255, 255, 255);
   border-radius: 12px;
-  padding: 25px;
+  /* padding: 25px; */
   color: black;
   display: flex;
   justify-content: center;
@@ -100,6 +100,8 @@
   transform-origin: center;
   transform: scale(0);
   transition: transform 0.5s ease, opacity 0.5s ease;
+  overflow: hidden;
+  border: white 5px solid;
 }
 
 .suggestion-box.show {
@@ -149,7 +151,7 @@
 }
 
 .avatar-background-listening {
-  animation: fullRotation 3s linear infinite;
+  animation: rotateBackground 3s linear infinite;
   transform-origin: center center;
 }
 
@@ -191,15 +193,6 @@
   }
   100% {
     transform: translateY(0px);
-  }
-}
-
-@keyframes fullRotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
   }
 }
 
@@ -294,27 +287,185 @@
   }
 }
 
-.background-shape-rotate {
-  animation: rotateBackground 10s linear infinite;
-  transform-origin: 138px 138px;
+.images-preview {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 8px;
+  /* padding: 8px; */
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
-.background-shape-rotate-reverse {
-  animation: rotateBackground 10s linear infinite reverse;
-  transform-origin: 138px 138px;
+.grid-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.main-content {
+.grid-one {
+  grid-template-columns: 1fr;
+}
+
+.grid-two {
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid-three {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.grid-four {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.youtube-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.youtube-preview iframe {
   position: absolute;
-  top: 60px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.youtube-preview-error {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ff0000;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+}
+
+/* Image Viewer Styles */
+.image-viewer-overlay {
+  position: fixed;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
   display: flex;
-  padding: 2rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  overflow-y: scroll;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.image-viewer-content {
+  width: 90vw;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.main-image-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.main-image {
+  max-width: 100%;
+  max-height: calc(90vh - 120px);
+  object-fit: contain;
+}
+
+.nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 60px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.nav-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.nav-button.prev {
+  left: 0;
+  border-radius: 0 5px 5px 0;
+}
+
+.nav-button.next {
+  right: 0;
+  border-radius: 5px 0 0 5px;
+}
+
+.thumbnail-carousel {
+  height: 100px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+}
+
+.thumbnail-container {
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.thumbnail-container.active {
+  border-color: #fff;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Auth Modal Styles */
@@ -354,6 +505,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
+  color: #666;
 }
 
 .form-group input {

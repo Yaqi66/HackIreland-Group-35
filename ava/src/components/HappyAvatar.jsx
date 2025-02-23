@@ -78,8 +78,8 @@ function HappyAvatar() {
         <path d="M138.07 164.952C131.995 164.952 126.999 162.286 126.999 165.876C126.999 169.466 131.924 172.376 137.999 172.376C144.074 172.376 148.999 169.466 148.999 165.876C148.999 162.286 144.145 164.952 138.07 164.952Z" fill="white"/>
       </g>
       <defs>
-        <filter id="filter0_d_45_2" x="49.0217" y="-7.62939e-05" width="226.978" height="225.469" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter0_d_45_2" x="49.0217" y="-7.62939e-05" width="226.978" height="225.469" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset/>
           <feGaussianBlur stdDeviation="25"/>
@@ -88,8 +88,8 @@ function HappyAvatar() {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_45_2"/>
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_45_2" result="shape"/>
         </filter>
-        <filter id="filter1_d_45_2" x="0" y="50" width="226.978" height="225.469" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter1_d_45_2" x="0" y="50" width="226.978" height="225.469" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset/>
           <feGaussianBlur stdDeviation="25"/>
@@ -98,8 +98,8 @@ function HappyAvatar() {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_45_2"/>
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_45_2" result="shape"/>
         </filter>
-        <filter id="filter2_d_45_2" x="29.9998" y="29.9999" width="216" height="216" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter2_d_45_2" x="29.9998" y="29.9999" width="216" height="216" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset/>
           <feGaussianBlur stdDeviation="10"/>
@@ -108,8 +108,8 @@ function HappyAvatar() {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_45_2"/>
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_45_2" result="shape"/>
         </filter>
-        <filter id="filter3_i_45_2" x="61.9993" y="61.9999" width="152" height="152" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter3_i_45_2" x="61.9993" y="61.9999" width="152" height="152" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feMorphology radius="1" operator="erode" in="SourceAlpha" result="effect1_innerShadow_45_2"/>
@@ -119,8 +119,8 @@ function HappyAvatar() {
           <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0.966667 0 0 0 0 1 0 0 0 1 0"/>
           <feBlend mode="normal" in2="shape" result="effect1_innerShadow_45_2"/>
         </filter>
-        <filter id="filter4_d_45_2" x="84.9993" y="90.9999" width="53" height="62" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter4_d_45_2" x="84.9993" y="90.9999" width="53" height="62" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset/>
           <feGaussianBlur stdDeviation="10"/>
@@ -129,8 +129,8 @@ function HappyAvatar() {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_45_2"/>
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_45_2" result="shape"/>
         </filter>
-        <filter id="filter5_d_45_2" x="137.999" y="90.9999" width="53" height="62" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter5_d_45_2" x="137.999" y="90.9999" width="53" height="62" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset/>
           <feGaussianBlur stdDeviation="10"/>
@@ -139,8 +139,8 @@ function HappyAvatar() {
           <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_45_2"/>
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_45_2" result="shape"/>
         </filter>
-        <filter id="filter6_d_45_2" x="106.999" y="144" width="62" height="48.3762" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-          <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+        <filter id="filter6_d_45_2" x="106.999" y="144" width="62" height="48.3762" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+          <feFlood floodOpacity="0" result="BackgroundImageFix"/>
           <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
           <feOffset/>
           <feGaussianBlur stdDeviation="10"/>
@@ -150,15 +150,15 @@ function HappyAvatar() {
           <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_45_2" result="shape"/>
         </filter>
         <linearGradient id="paint0_linear_45_2" x1="202" y1="77.9999" x2="72" y2="196" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#EB60F3"/>
-          <stop offset="0.0539999" stop-color="#DC10E7"/>
-          <stop offset="0.944" stop-color="#25D1F3"/>
-          <stop offset="1" stop-color="#84E5F9"/>
+          <stop stopColor="#EB60F3"/>
+          <stop offset="0.0539999" stopColor="#DC10E7"/>
+          <stop offset="0.944" stopColor="#25D1F3"/>
+          <stop offset="1" stopColor="#84E5F9"/>
         </linearGradient>
         <radialGradient id="paint1_radial_45_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(98.4993 92.4999) rotate(43.5559) scale(84.1724)">
-          <stop stop-color="#8908C9"/>
-          <stop offset="0.0889999" stop-color="#6D05A1"/>
-          <stop offset="0.879" stop-color="#0A1758"/>
+          <stop stopColor="#8908C9"/>
+          <stop offset="0.0889999" stopColor="#6D05A1"/>
+          <stop offset="0.879" stopColor="#0A1758"/>
         </radialGradient>
       </defs>
     </svg>
