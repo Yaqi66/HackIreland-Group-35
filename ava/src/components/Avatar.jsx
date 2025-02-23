@@ -1,15 +1,15 @@
 import useStore from '../store/useStore';
-import useRecorder from '../hooks/useRecorder';
+import usePromptRecorder from '../hooks/usePromptRecorder';
 import HappyAvatar from './HappyAvatar';
 import SleepingZ from './SleepingZ';
 import avatarNoFaceBw from '../assets/avatar-no-face-bw.svg';
 
 function Avatar() {
-  const { awakeState, isListening, activeEmotion, wakeUp, startListening } = useStore();
-  useRecorder(); // This will handle recording when isListening is true
+  const { isAwake, isListening, activeEmotion, wakeUp, startListening } = useStore();
+  usePromptRecorder(); // This will handle recording when isListening is true
 
   const handleClick = () => {
-    if (!awakeState) {
+    if (!isAwake) {
       wakeUp();
     } else if (!isListening) {
       startListening();
@@ -17,7 +17,7 @@ function Avatar() {
   };
 
   const getAvatarContent = () => {
-    if (!awakeState) {
+    if (!isAwake) {
       return <img src={avatarNoFaceBw} alt="Sleeping avatar" className="avatar-image" />;
     }
     
@@ -31,7 +31,7 @@ function Avatar() {
   return (
     <div className="avatar-container" onClick={handleClick}>
       {getAvatarContent()}
-      {!awakeState && <SleepingZ />}
+      {!isAwake && <SleepingZ />}
     </div>
   );
 }

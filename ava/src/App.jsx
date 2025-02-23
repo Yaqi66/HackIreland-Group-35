@@ -4,18 +4,17 @@ import Avatar from "./components/Avatar";
 import VideoPreview from "./components/VideoPreview";
 import AudioWave from "./components/AudioWave";
 import useStore from "./store/useStore";
-import useWebRTC from "./hooks/useWebRTC";
 import { useSupabase } from './hooks/useSupabase'
 import AuthModal from './components/AuthModal'
+import useWakeWordRecorder from './hooks/useWakeWordRecorder';
 
 function App() {
-  const { awakeState, isListening } = useStore();
-  const { videoStream, error } = useWebRTC(awakeState);
+  const { isAwake, isListening } = useStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user, signOut } = useSupabase();
+  const { startWakeWordRecording, stopRecording } = useWakeWordRecorder();
 
   useEffect(() => {
-    console.log("user:", user);
     // Only show modal if user is explicitly null (not undefined)
     if (user === null) {
       setShowAuthModal(true);
@@ -24,13 +23,19 @@ function App() {
     }
   }, [user]);
 
-  useEffect(()=>{
-    console.log("showAuthModal:", showAuthModal);
-  },[showAuthModal]) 
+
+    // Start wake word detection when awake
+    useEffect(() => {
+      if (isAwake && user && !isListening) {
+        startWakeWordRecording();
+      } else {
+        stopRecording();
+      }
+    }, [isAwake, user, startWakeWordRecording, stopRecording, isListening]);
 
   return (
     <div
-      className={`app-container ${awakeState ? "listening" : "not-listening"}`}
+      className={`app-container ${isAwake ? "listening" : "not-listening"}`}
     >
       {user && (
         <button className="sign-out-button" onClick={signOut}>
@@ -40,7 +45,7 @@ function App() {
       <div className="left-container horizontal-container">
         <div className="top-container left-top corner vertical-container">
           <div
-            className={`suggestion-box top-left ${awakeState ? "show" : ""}`}
+            className={`suggestion-box top-left ${isAwake ? "show" : ""}`}
           >
             {isListening ? "Listening..." : "Tap to Start"}
           </div>
@@ -48,7 +53,7 @@ function App() {
         <div className="center-container left-center vertical-container"></div>
         <div className="bottom-container left-bottom corner vertical-container">
           <div
-            className={`suggestion-box bottom-left ${awakeState ? "show" : ""}`}
+            className={`suggestion-box bottom-left ${isAwake ? "show" : ""}`}
           >
             Suggestion 3
           </div>
@@ -58,8 +63,8 @@ function App() {
         <div className="top-container middle-top vertical-container"></div>
         <div className="center-container middle-center vertical-container center">
           <Avatar />
-          {/* <div className={`audio-wave ${awakeState ? 'active' : ''}`}>
-            <AudioWave isListening={awakeState} />
+          {/* <div className={`audio-wave ${isAwake ? 'active' : ''}`}>
+            <AudioWave isListening={isAwake} />
           </div> */}
         </div>
         <div className="bottom-container middle-bottom vertical-container"></div>
@@ -67,7 +72,7 @@ function App() {
       <div className="right-container horizontal-container">
         <div className="top-container right-top corner vertical-container">
           <div
-            className={`suggestion-box top-right ${awakeState ? "show" : ""}`}
+            className={`suggestion-box top-right ${isAwake ? "show" : ""}`}
           >
             Suggestion 2
           </div>
@@ -76,11 +81,10 @@ function App() {
         <div className="bottom-container right-bottom corner vertical-container">
           <div
             className={`suggestion-box bottom-right ${
-              awakeState ? "show" : ""
+              isAwake ? "show" : ""
             }`}
           >
             {/* <VideoPreview stream={videoStream} /> */}
-            {error && <div className="error-message">{error}</div>}
           </div>
         </div>
       </div>
