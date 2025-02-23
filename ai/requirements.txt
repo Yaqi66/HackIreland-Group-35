@@ -9,3 +9,4 @@ Pillow
 pygame
 beautifulsoup4
 supabase
+werkzeug

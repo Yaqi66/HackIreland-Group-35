@@ -60,6 +60,13 @@ def list_bucket_files(bucket_name: str) -> list:
         print(f"Failed to list bucket contents: {str(e)}")
         return []
 
+def dump_files_to_console(files):
+    for file in files:
+        if file['name'] is None or file['metadata'] is None or file['metadata']['size'] is None:
+            print('Spurious file being skipped')
+            continue
+        print(f"- {file['name']} (size: {file['metadata']['size']} bytes)")
+
 def upload_file_to_bucket(file_data: bytes, bucket_name: str, destination_path: str, content_type: str = None) -> str:
     """
     Upload file data to a Supabase storage bucket.
@@ -74,50 +81,17 @@ def upload_file_to_bucket(file_data: bytes, bucket_name: str, destination_path: 
         str: Public URL of the uploaded file
     """
     try:
-        # List current files in bucket
-        print("Current files in bucket:")
-        
-        def dump_files_to_console(files):
-            for file in files:
-                if file['name'] is None or file['metadata'] is None or file['metadata']['size'] is None:
-                    print('Spurious file being skipped')
-                    continue
-                print(f"- {file['name']} (size: {file['metadata']['size']} bytes)")
-
-        dump_files_to_console(list_bucket_files(bucket_name))
-        
-        # Upload file
         bucket = supabase.storage.from_(bucket_name)
         response = bucket.upload(destination_path, file_data, file_options={"contentType": content_type} if content_type else None)
-        
-        # Get public URL
-        public_url = bucket.get_public_url(destination_path)
-        
-        print("\nAfter upload - files in bucket:")
-        dump_files_to_console(list_bucket_files(bucket_name))
-            
-        return public_url
+        return bucket.get_public_url(destination_path)
         
     except Exception as e:
         raise Exception(f"Failed to upload file to Supabase: {str(e)}")
 
 def download_file(bucket_name: str, file_path: str) -> bytes:
-    """
-    Download a file from a Supabase storage bucket.
-    
-    Args:
-        bucket_name (str): Name of the Supabase storage bucket
-        file_path (str): Path to the file within the bucket
-    
-    Returns:
-        bytes: The file data
-    """
-    try:
-        bucket = supabase.storage.from_(bucket_name)
-        response = bucket.download(file_path)
-        return response
-    except Exception as e:
-        raise Exception(f"Failed to download file from Supabase: {str(e)}")
+    bucket = supabase.storage.from_(bucket_name)
+    response = bucket.download(file_path)
+    return response
 
 def delete_file(bucket_name: str, file_path: str) -> None:
     """
